@@ -1,19 +1,14 @@
 /**
- *Submitted for verification at BscScan.com on 2021-03-01
-*/
-
-/**
- *Submitted for verification at BscScan.com on 2021-03-01
+ *Submitted for verification at BscScan.com on 2021-05-32
 */
 
 /**
    
    #LIQ+#RFI+#SHIB+#DOGE < NOTHING
    #NOTHING features:
-   2.5% fee auto add to the liquidity pool to locked forever when selling
-   2.5% fee auto distribute to all holders
-   I created a black hole so token will deflate itself in supply with every transaction
-   50% Supply is burned at start.
+   7% fee auto add to the liquidity pool to locked forever when selling
+   3% fee auto distribute to all holders
+   Significant burn at start
    
  */
 
@@ -709,8 +704,8 @@ contract NOTHING is Context, IERC20, Ownable {
 
     mapping (address => bool) private _isExcluded;
     address[] private _excluded;
-    uint256 private _maxNumExcludedWallets = 30; //fix issue 03/04
-    uint256 private _numExcludedWallets = 0; //fix issue 03/04
+    uint256 private _maxNumExcludedWallets = 100;//fix issue 03/04
+    uint256 private _numExcludedWallets = 0;//fix issue 03/04
    
     uint256 private constant MAX = ~uint256(0);
     uint256 private _tTotal = 1000000000000 * 10**18;//1,000,000,000,000 * 10**18;//1,000,000,000,000,000 * 10**9;
@@ -723,21 +718,21 @@ contract NOTHING is Context, IERC20, Ownable {
     
     uint256 public _taxFee = 3;
     uint256 private _previousTaxFee = _taxFee;
-    uint256 private _maxTaxFee = 10; //fix 02
+    uint256 private _maxTaxFee = 15; //fix 02 WORKS
     
-    uint256 public _liquidityFee = 3;
+    uint256 public _liquidityFee = 7;
     uint256 private _previousLiquidityFee = _liquidityFee;
-    uint256 private _maxLiquidityFee = 10; //fix 02
+    uint256 private _maxLiquidityFee = 15; //fix 02 WORKS
 
-    IUniswapV2Router02 public uniswapV2Router; // fix 08
-    address public uniswapV2Pair; // fix 08
+    IUniswapV2Router02 public uniswapV2Router; // fix 08 WORKS
+    address public uniswapV2Pair; // fix 08 WORKS
     
     bool public inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = true;
     
-    uint256 public _maxTxAmount = 500000000  * 10**18;//500,000,000 * 10**18; //500,000,000,000 * 10**9;
-    uint256 private _minMaxTxAmount = 100000000 * 10**18; //fix 02
-    uint256 public _numTokensSellToAddToLiquidity = 500000000 * 10**18;//500,000,000 * 10**18; //500,000,000,000 * 10**9;
+    uint256 public _maxTxAmount = 1100000000  * 10**18;
+    uint256 public _maxTxPercentMinDividedBy100 = 1; //0.0001 actual, 0.01%
+    uint256 public _numTokensSellToAddToLiquidity = 100000000 * 10**18;
     
     event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
     event SwapAndLiquifyEnabledUpdated(bool enabled);
@@ -781,7 +776,7 @@ contract NOTHING is Context, IERC20, Ownable {
         // set the rest of the contract variables
         uniswapV2Router = _uniswapV2Router;
     }
-
+    
     function name() public view returns (string memory) {
         return _name;
     }
@@ -869,8 +864,8 @@ contract NOTHING is Context, IERC20, Ownable {
 
     function excludeFromReward(address account) public onlyOwner() {
         // require(account != 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D, 'We can not exclude Uniswap router.');
-        require(!_isExcluded[account], "Account is already excluded");
-        require(_excluded.length <= _maxNumExcludedWallets, "Max exclusions met. Cannot exclude another wallet, must include one first."); //fix issue 03/04
+        require(!_isExcluded[account], "Account is already excluded"); //WORKS
+        require(_numExcludedWallets <= _maxNumExcludedWallets, "Max reward exclusions met. Cannot exclude another wallet, must include one first."); //fix issue 03/04 WORKS
         if(_rOwned[account] > 0) {
             _tOwned[account] = tokenFromReflection(_rOwned[account]); 
         }
@@ -880,9 +875,8 @@ contract NOTHING is Context, IERC20, Ownable {
     }
 
     function includeInReward(address account) external onlyOwner() {
-        require(_isExcluded[account], "Account is already included"); //fix 11
-        require(account != owner(), "Cannot include contract owner in reward"); //fix issue 03 NADA Change
-        require(account != address(this), "Cannot include contract in reward"); //fix issue 03 NADA Change
+        require(_isExcluded[account], "Account is already included"); //fix 11 WORKS
+        require(account != owner(), "Cannot include contract owner in reward"); //fix issue 03 NADA Change WORKS
         
         for (uint256 i = 0; i < _excluded.length; i++) {
             if (_excluded[i] == account) {
@@ -916,23 +910,20 @@ contract NOTHING is Context, IERC20, Ownable {
     }
     
     function setTaxFeePercent(uint256 taxFee) external onlyOwner() {
-        require(taxFee <= _maxTaxFee, "Invalid taxFee, too high"); //fix 02
+        require(taxFee <= _maxTaxFee, "Invalid taxFee, too high"); //fix 02 WORKS
         _taxFee = taxFee;
     }
     
     function setLiquidityFeePercent(uint256 liquidityFee) external onlyOwner() {
-        require(liquidityFee <= _maxLiquidityFee, "Invalid liquidityFee, too high"); //fix 02
+        require(liquidityFee <= _maxLiquidityFee, "Invalid liquidityFee, too high"); //fix 02 WORKS
         _liquidityFee = liquidityFee;
     }
    
-    function setMaxTxPercent(uint256 maxTxPercent) external onlyOwner() {
+    function setMaxTxPercentDiv100(uint256 maxTxPercent) external onlyOwner() {
+        require(maxTxPercent >= _maxTxPercentMinDividedBy100, "Invalid maxTxPercent, too low"); //fix 02 WORKS
         _maxTxAmount = _tTotal.mul(maxTxPercent).div(
-            10**2
+            10**4
         );
-    }
-    
-    function setNumTokensSellToAddToLiquidity(uint256 numTokensSellToAddToLiquidity) external onlyOwner() {
-        _numTokensSellToAddToLiquidity = numTokensSellToAddToLiquidity;
     }
 
     function setSwapAndLiquifyEnabled(bool _enabled) public onlyOwner {
